@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>ใบเปลี่ยนสินค้า</title>
+  <style>
+  body {
+    font-family: 'TlwgTypo', 'Loma', 'TlwgTypewriter', 'Noto Sans Thai', sans-serif;
+    font-size: 13pt;
+    width: 384px;
+    height: 576px;
+    margin: 0;
+    padding: 8px 16px;
+    box-sizing: border-box;
+    line-height: 1.25;
+    color: #000;
+  }
+
+  h2 {
+    text-align: center;
+    font-size: 15pt;
+    margin: 6px 0 4px 0;
+  }
+
+  .center {
+    text-align: center;
+    font-size: 13pt;
+    margin-bottom: 6px;
+  }
+
+  .label {
+    font-weight: bold;
+    margin: 6px 0 2px 0;
+  }
+
+  .field-line {
+    border-bottom: 1px solid #000;
+    height: 20px;
+    padding: 2px 4px;
+    margin-bottom: 3px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 13pt;
+  }
+
+  .recipient-box {
+    font-size: 12pt;
+    margin-bottom: 8px;
+  }
+
+  .checkbox-group {
+    display: flex;
+    gap: 8px;
+    margin: 6px 0;
+    font-size: 12pt;
+  }
+
+  .note {
+    font-size: 10.5pt;
+    margin-top: 4px;
+    line-height: 1.2;
+  }
+
+  .bold-box {
+    border-radius: 12px;
+    padding: 6px 10px;
+    margin-top: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    line-height: 1.4;
+  }
+
+  .bold-box .highlight {
+    font-weight: bold;
+    text-decoration: underline;
+    font-size: 12pt;
+  }
+  </style>
+</head>
+<body>
+  <div class="order-number">
+    <div class="label">Order number</div>
+    <div class="field-line">{{order_number}}</div>
+  </div>
+
+  <h2>ใบปะหน้ากล่อง (ตอนส่งเปลี่ยน)</h2>
+  <div class="center">บริษัท กิจกนก จำกัด</div>
+
+<div class="label">ผู้ส่ง (ระบุชื่อ ที่อยู่ เบอร์โทร)</div>
+<div class="field-line">{{sender_line1}}</div>
+<div class="field-line">{{sender_line2}}</div>
+<div class="field-line">{{sender_line3}}</div>
+<div class="field-line">{{sender_line4}}</div>
+
+
+
+  <div class="label">ผู้รับ</div>
+  <div class="recipient-box">
+    บริษัท กิจกนก จำกัด<br />
+    91-93-95 ซอยสวนผัก29 แขวงตลิ่งชัน<br />
+    เขตตลิ่งชัน กทมฯ 10170<br />
+    โทร. 02-884-3817
+  </div>
+
+  <div class="label">สินค้าที่ต้องการเปลี่ยน (ระบุไซส์ , แบบ และสี)</div>
+  <div class="field-line"></div>
+  <div class="field-line"></div>
+
+  <div class="checkbox-group">
+    <label><input type="checkbox" /> ส่งผิด</label>
+    <label><input type="checkbox" /> ชำรุด</label>
+    <label><input type="checkbox" /> ใส่ไม่พอดี</label>
+  </div>
+
+  <div class="note">
+    ** กรุณาระบุเบอร์โทร_________________
+  </div>
+
+  <div class="bold-box">
+    *** กรณีที่ซื้อจาก <span class="highlight">Shopee Lazada Tiktok</span><br />
+    ต้องไม่กด <span class="highlight">คืนสินค้า</span> หากจะส่งเปลี่ยน
+  </div>
+</body>
+</html>

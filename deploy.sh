@@ -7,6 +7,7 @@ echo "======================================"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # ฟังก์ชันสำหรับแสดงข้อความ
@@ -20,6 +21,10 @@ print_warning() {
 
 print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+print_blue() {
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
 # ตรวจสอบว่ามี git หรือไม่
@@ -116,24 +121,68 @@ if [[ $build_docker =~ ^[Yy]$ ]]; then
     if [ $? -eq 0 ]; then
         print_info "✅ Docker image built successfully!"
         
-        # ถามว่าต้องการ push ขึ้น Docker Hub หรือไม่
-        read -p "🚀 Do you want to push to Docker Hub? (y/n): " push_docker
-        if [[ $push_docker =~ ^[Yy]$ ]]; then
-            read -p "📦 Enter Docker Hub username: " docker_username
-            if [ ! -z "$docker_username" ]; then
-                docker tag "${image_name}:latest" "${docker_username}/${image_name}:latest"
-                
-                print_info "Pushing to Docker Hub..."
-                docker push "${docker_username}/${image_name}:latest"
-                
-                if [ $? -eq 0 ]; then
-                    print_info "✅ Successfully pushed to Docker Hub!"
-                    echo "🔗 Image URL: ${docker_username}/${image_name}:latest"
-                else
-                    print_error "❌ Failed to push to Docker Hub. Please login first: docker login"
+        # ถามว่าต้องการ push หรือไม่
+        echo ""
+        print_blue "Choose Docker Registry:"
+        echo "1. Docker Hub (docker.io)"
+        echo "2. GitHub Container Registry (ghcr.io)"
+        echo "3. Skip pushing"
+        read -p "Select option (1-3): " registry_option
+        
+        case $registry_option in
+            1)
+                # Docker Hub
+                read -p "📦 Enter Docker Hub username: " docker_username
+                if [ ! -z "$docker_username" ]; then
+                    docker tag "${image_name}:latest" "${docker_username}/${image_name}:latest"
+                    
+                    print_info "Pushing to Docker Hub..."
+                    docker push "${docker_username}/${image_name}:latest"
+                    
+                    if [ $? -eq 0 ]; then
+                        print_info "✅ Successfully pushed to Docker Hub!"
+                        echo "🔗 Image URL: ${docker_username}/${image_name}:latest"
+                    else
+                        print_error "❌ Failed to push to Docker Hub. Please login first: docker login"
+                    fi
                 fi
-            fi
-        fi
+                ;;
+            2)
+                # GitHub Container Registry
+                read -p "📦 Enter GitHub username: " github_username
+                if [ ! -z "$github_username" ]; then
+                    github_image="ghcr.io/${github_username}/${image_name}:latest"
+                    docker tag "${image_name}:latest" "${github_image}"
+                    
+                    print_warning "Make sure you're logged in to GitHub Container Registry:"
+                    print_blue "Run: echo \"YOUR_PAT\" | docker login ghcr.io -u ${github_username} --password-stdin"
+                    echo ""
+                    read -p "Are you logged in to ghcr.io? (y/n): " github_logged_in
+                    
+                    if [[ $github_logged_in =~ ^[Yy]$ ]]; then
+                        print_info "Pushing to GitHub Container Registry..."
+                        docker push "${github_image}"
+                        
+                        if [ $? -eq 0 ]; then
+                            print_info "✅ Successfully pushed to GitHub Container Registry!"
+                            echo "🔗 Image URL: ${github_image}"
+                        else
+                            print_error "❌ Failed to push to GitHub Container Registry."
+                            print_warning "Check github-docker-login.md for login instructions"
+                        fi
+                    else
+                        print_warning "Please login to GitHub Container Registry first"
+                        print_blue "See: github-docker-login.md for detailed instructions"
+                    fi
+                fi
+                ;;
+            3)
+                print_info "Skipping Docker registry push"
+                ;;
+            *)
+                print_warning "Invalid option. Skipping push."
+                ;;
+        esac
     else
         print_error "❌ Failed to build Docker image!"
     fi
@@ -182,6 +231,12 @@ print_warning "⚠️  Remember to:"
 echo "   1. Keep your OpenAI API key secure"
 echo "   2. Test the deployment after going live"
 echo "   3. Monitor logs in Coolify dashboard"
+
+echo ""
+print_blue "📚 Additional Resources:"
+echo "   - DEPLOYMENT.md - Complete deployment guide"
+echo "   - github-docker-login.md - GitHub Container Registry setup"
+echo "   - quick-commands.md - Commands for copy/paste"
 
 echo ""
 print_info "🎉 Deployment script completed!" 

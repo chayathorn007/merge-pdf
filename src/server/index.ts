@@ -4,7 +4,7 @@ import path from "path";
 import { uploadRouter } from "./routes/APIPDF";
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
@@ -27,9 +27,9 @@ app.get("/upload", (req: Request, res: Response) => {
 // ✅ API routes
 app.use("/upload", uploadRouter);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Backend ready at http://localhost:${PORT}`);
-  console.log(`📝 Upload page available at http://localhost:${PORT}/`);
-  console.log(`🔗 Alternative upload page at http://localhost:${PORT}/upload`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Backend ready at http://0.0.0.0:${PORT}`);
+  console.log(`📝 Upload page available at http://0.0.0.0:${PORT}/`);
+  console.log(`🔗 Alternative upload page at http://0.0.0.0:${PORT}/upload`);
 });
 

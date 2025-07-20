@@ -5,13 +5,22 @@ import { OpenAI } from "openai";
 import fs from "fs";
 import path from "path";
 
-// ✅ สร้าง client ด้วย API key (with fallback)
+// ✅ Interface สำหรับข้อมูลที่ดึงมาจาก AI
+export interface ExtractedData {
+  order: string;
+  recipient: string;
+  sender: string;
+}
+
+// ✅ สร้าง client ด้วย API key (with fallback และ timeout)
 let openai: OpenAI | null = null;
 
 try {
   if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "sk-placeholder-key-for-development") {
     openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
+      timeout: 60000, // ✅ ตั้งค่า timeout 60 วินาทีสำหรับ OpenAI API
+      maxRetries: 2, // ✅ ลองใหม่ 2 ครั้งถ้าเกิดข้อผิดพลาด
     });
   } else {
     console.warn("⚠️ OpenAI API key not found or is placeholder. AI features will be disabled.");
@@ -29,8 +38,8 @@ function stripMarkdownJson(input: string): string {
     .trim();
 }
 
-// ✅ ฟังก์ชันหลัก
-export async function extractShopeeWithAI(text: string) {
+// ✅ ฟังก์ชันหลัก - เพิ่ม timeout handling
+export async function extractShopeeWithAI(text: string): Promise<ExtractedData[]> {
   // ถ้าไม่มี OpenAI client ให้ return mock data
   if (!openai) {
     console.warn("⚠️ OpenAI not available, returning mock data");
@@ -93,8 +102,17 @@ export async function extractShopeeWithAI(text: string) {
 ${text}
 """
 `;
+
   try {
-    const completion = await openai.chat.completions.create({
+    console.log("🤖 Starting AI processing...");
+    const startTime = Date.now();
+    
+    // ✅ ใช้ Promise.race เพื่อ timeout handling แบบ custom
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('AI processing timeout after 50 seconds')), 50000);
+    });
+
+    const apiPromise = openai.chat.completions.create({
       model: "gpt-4o-mini", // ✅ ใช้รุ่นเร็วและถูก
       messages: [
         {
@@ -106,6 +124,10 @@ ${text}
       temperature: 0.2,
     });
 
+    const completion = await Promise.race([apiPromise, timeoutPromise]) as any;
+    const processingTime = Date.now() - startTime;
+    console.log(`⏱️ AI processing completed in ${processingTime}ms`);
+
     const resultText = completion.choices[0].message.content || "";
     console.log("📦 AI raw response:\n", resultText);
     const cleaned = stripMarkdownJson(resultText);
@@ -116,7 +138,20 @@ ${text}
     return Array.isArray(data) ? data : [];
 
   } catch (e: any) {
-    console.error("❌ JSON parse error or OpenAI error:\n", e.message || e);
+    console.error("❌ AI processing error:\n", e.message || e);
+    
+    // ✅ ถ้าเป็น timeout หรือ AI error ให้ return mock data เพื่อให้ระบบทำงานต่อได้
+    if (e.message?.includes('timeout') || e.message?.includes('API')) {
+      console.warn("⚠️ AI timeout/error, falling back to mock data");
+      return [
+        {
+          order: `FALLBACK_${Date.now()}`,
+          recipient: "ข้อมูลจากระบบสำรอง - กรุณาตรวจสอบและแก้ไขข้อมูลที่อยู่ผู้รับให้ครบถ้วน",
+          sender: "บริษัท กิจกนก จำกัด 91-93-95 ซอยสวนผัก 29, แขวงตลิ่งชัน, เขตตลิ่งชัน, จังหวัดกรุงเทพมหานคร 10170"
+        }
+      ];
+    }
+    
     return [];
   }
 }
